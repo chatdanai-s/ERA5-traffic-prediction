@@ -22,7 +22,7 @@ ERA5-traffic-prediction/
 ├── cleaned data/              # Processed outputs from EDA notebook
 ├── images/                    # Images used in README.md
 ├── unused data/               # Other traffic datasets not used
-├── old/               	       # Previous iterations of this proejct
+├── old/               	       # Previous iterations of this project
 ├── 01_EDA_and_feature_engineering.ipynb
 ├── 02_data_modelling.ipynb
 ├── ERA5_API_DL.py             # Attempted API download (abandoned due to request size)
@@ -57,7 +57,8 @@ An API-based download (`ERA5_API_DL.py`) was attempted but abandoned due to requ
 
 **Cyclic time encoding**
 
-Hour of day, day of week, and month of year are encoded using 5-harmonic sin/cos decomposition rather than one-hot encoding. This preserves the cyclic nature of these features and reduces dimensionality from 43 columns (24+7+12) down to 30 (5x2x3).
+- Hour of day, day of week, and month of year are encoded using 5-harmonic sin/cos decomposition rather than one-hot encoding.
+- This preserves the cyclic nature of these features and reduces dimensionality from 43 columns (24+7+12) down to 30 (5x2x3).
 
 **One-hot encoding**
 - `holiday`: 11 binary columns (one per named US holiday; `None` dropped)
@@ -87,7 +88,7 @@ Hour of day, day of week, and month of year are encoded using 5-harmonic sin/cos
 - **Weekday vs weekend:** Weekend traffic is 34.7% lower than weekdays (median 2,675 vs 4,094).
 
 <p align="center">
-  <img src="images/compare_weekend.png" alt="Weekday vs weekend traffic" width="67%">
+  <img src="images/compare_weekend.png" alt="Weekday vs weekend traffic" width="40%">
 </p>
 
 - **Year-on-year growth:** No sustained growth or decline trend over 2012-2018. The median annual growth rate across years is 0.36%, with fluctuations between -3.7% and +8.3%.
@@ -106,7 +107,7 @@ Hour of day, day of week, and month of year are encoded using 5-harmonic sin/cos
 
 ---
 
-## Modelling
+## Predictive Modelling
 
 ### Feature Sets
 
@@ -119,7 +120,7 @@ Hour of day, day of week, and month of year are encoded using 5-harmonic sin/cos
 | Descriptive weather | `weather_description` (37 categories) | 79 |
 | ERA5 weather | ERA5 precipitation type x threshold (14 columns) | 56 |
 
-All feature sets include: temperature, 30 harmonic seasonality columns (hour/day/month), and 11 holiday indicator columns.
+- All other feature sets include: temperature, 30 harmonic seasonality columns (hour/day/month), and 11 holiday indicator columns.
 
 ### Model Hyperparameters
 
@@ -137,7 +138,7 @@ All feature sets include: temperature, 30 harmonic seasonality columns (hour/day
 
 ---
 
-## Results
+## Prediction Results
 
 ### Model Comparison Across Feature Sets
 
@@ -147,19 +148,21 @@ Plotted full numerical results across all 20 model-feature combinations:
 
 ### Actual vs Predicted Traffic Volume
 
+Columns are separated by prediction model (Linear regression, Decision tree, Random forest, Bagging, XGBoost) used. Rows are separated by weather data (None, Main, Detailed, ERA5) which is color-coded.
+
 ![Actual vs predicted traffic volume per model and feature set](images/actual_vs_predicted.png)
 
 ### Key Takeaways
 
-**XGBoost with ERA5 features is the best-performing configuration** across all metrics. This is the only configuration that significantly breaks below 500 unit errors on test RMSE and bad weather RMSE.
+- **XGBoost with ERA5 weather features is the best-performing configuration** across all metrics. This is the only configuration that significantly **breaks below 500 on test RMSE** and bad weather RMSE.
 
-**ERA5 weather features consistently outperform observed weather features**, particularly on bad weather RMSE, the margin where weather quality matters most. The XGBoost with ERA5 improves bad weather RMSE by 9% (41 units) over its no-weather baseline, while the same model using descriptive station weather sees no meaningful gain.
+- **ERA5 weather features consistently outperform observed weather features**, particularly on bad weather RMSE, the margin where weather quality matters most. The XGBoost with ERA5 **improves bad weather RMSE by 9% (41 units)** over its no-weather baseline, while the same model using descriptive station weather sees no meaningful gain.
 
-**Adding observed weather descriptions (main or detailed) provides minimal benefit** over using no weather at all, suggesting the station weather data adds little predictive signal beyond what time and holiday features already capture.
+- **Adding observed weather descriptions (main or detailed) provides minimal benefit** over using no weather at all, suggesting the station weather data adds little predictive signal beyond what time and holiday features already capture.
 
-**Time and holiday features dominate predictive power.** Even the no-weather XGBoost achieves R² = 0.947, close to the best result of 0.952. The biggest performance gap is between linear regression and all tree-based models, reflecting strong nonlinear interactions between time-of-day and traffic patterns.
+- **Time and holiday features dominate predictive power.** Even the no-weather XGBoost achieves R² = 0.947, close to the best result of 0.952. The biggest performance gap is between linear regression and all tree-based models, reflecting strong nonlinear interactions between time-of-day and traffic patterns.
 
-**Linear regression substantially underperforms** across all feature sets (R² ~0.83, RMSE ~800), indicating the time-traffic relationship is not well captured by a linear model.
+- **Linear regression substantially underperforms** across all feature sets (R² ~0.83, RMSE ~800), indicating the time-traffic relationship is not well captured by a linear model.
 
 ---
 
