@@ -8,7 +8,7 @@ Hourly traffic volume prediction on Minneapolis I-94 using atmospheric reanalysi
 
 **Models:** Linear Regression, Decision Tree, Random Forest, Bagging, XGBoost
 
-**Evaluation:** R², RMSE (train), RMSE (test), RMSE (bad weather only)
+**Evaluation:** R², RMSE (train), RMSE (test), RMSE ("bad weather" only)
 
 ---
 
@@ -56,6 +56,7 @@ An API-based download (`ERA5_API_DL.py`) was attempted but abandoned due to requ
 ### 3. Feature Engineering
 
 **Cyclic time encoding**
+
 Hour of day, day of week, and month of year are encoded using 5-harmonic sin/cos decomposition rather than one-hot encoding. This preserves the cyclic nature of these features and reduces dimensionality from 43 columns (24+7+12) down to 30 (5x2x3).
 
 **One-hot encoding**
@@ -70,31 +71,36 @@ Hour of day, day of week, and month of year are encoded using 5-harmonic sin/cos
 
 ### Time Patterns
 
-Traffic volume is strongly driven by time of day and day of week. The boxplots below show the distributions by hour, weekday, and month.
+- **Traffic volume is strongly driven by time of day and day of week.**
 
 ![Traffic volume by hour](images/EDA_hourofday.png)
-![Traffic volume by day of week](images/EDA_dayofweek.png)
-![Traffic volume by month](images/EDA_monthofyear.png)
 
-**Peak vs off-peak hours** (defined as 06:00-09:00 and 15:00-18:00 vs 10:00-15:00): Peak hours (median 5,181) carry 9.3% more traffic than off-peak hours (median 4,739). Nighttime volume (median 1,117) drops to less than 25% of peak levels.
+<p align="center">
+  <img src="images/EDA_dayofweek.png" width="49%">
+  <img src="images/EDA_monthofyear.png" width="49%">
+</p>
+
+- **Peak vs off-peak hours** (defined as 06:00-09:00 and 15:00-18:00 vs 10:00-15:00): Peak hours (median 5,181) carry 9.3% more traffic than off-peak hours (median 4,739). Nighttime volume (median 1,117) drops to less than 25% of peak levels.
 
 ![Median traffic by hour](images/compare_rushhour.png)
 
-**Weekday vs weekend:** Weekend traffic is 34.7% lower than weekdays (median 2,675 vs 4,094).
+- **Weekday vs weekend:** Weekend traffic is 34.7% lower than weekdays (median 2,675 vs 4,094).
 
-![Weekday vs weekend traffic](images/compare_weekend.png)
+<p align="center">
+  <img src="images/compare_weekend.png" alt="Weekday vs weekend traffic" width="67%">
+</p>
 
-**Year-on-year growth:** No sustained growth or decline trend over 2012-2018. The median annual growth rate across years is 0.36%, with fluctuations between -3.7% and +8.3%.
+- **Year-on-year growth:** No sustained growth or decline trend over 2012-2018. The median annual growth rate across years is 0.36%, with fluctuations between -3.7% and +8.3%.
 
 ![Year-on-year traffic growth](images/compare_year.png)
 
 ### Weather Effects
 
-**Holidays** reduce traffic by 76.0% overall on weekdays. The reduction is consistent across all weekdays (ranging from -69.9% on Tuesdays to -81.4% on Thursdays). No holiday observations fall on weekends.
+- **Holidays** reduce traffic by 76.0% overall on weekdays. The reduction is consistent across all weekdays (ranging from -69.9% on Tuesdays to -81.4% on Thursdays). No holiday observations fall on weekends.
 
 ![Holiday vs non-holiday traffic by day of week](images/compare_holiday.png)
 
-**Bad weather** (any `weather_main` value other than `Clear` or `Clouds`) reduces overall median traffic by 11.7%. The effect is strongest late at night (hours 20:00-23:00, -6% to -9%) and weakest in the early morning hours 04:00-05:00, where traffic is marginally higher in bad weather.
+- **Bad weather** (any `weather_main` value other than `Clear` or `Clouds`) generally reduces median traffic. The effect is strongest late at night (hours 20:00-23:00, -6% to -9%) and weakest in the early morning hours 04:00-05:00, where traffic is marginally higher in bad weather.
 
 ![Bad weather vs good weather traffic by hour](images/compare_weather.png)
 
@@ -104,7 +110,7 @@ Traffic volume is strongly driven by time of day and day of week. The boxplots b
 
 ### Feature Sets
 
-Four feature sets are evaluated to isolate the contribution of each weather data source:
+- Four feature sets are evaluated to isolate the contribution of each weather data source:
 
 | Feature set | Weather features included | Total columns |
 |---|---|---|
@@ -117,7 +123,7 @@ All feature sets include: temperature, 30 harmonic seasonality columns (hour/day
 
 ### Model Hyperparameters
 
-All tree-based models are regularised to reduce overfitting observed in initial runs.
+- All tree-based models are regularised to reduce overfitting observed in initial no-hyperparameter-tuning runs.
 
 | Model | Key hyperparameters |
 |---|---|
@@ -127,7 +133,7 @@ All tree-based models are regularised to reduce overfitting observed in initial 
 | Bagging | `n_estimators=100`, `max_samples=0.5`, `max_features=0.5`, `bootstrap_features=True` |
 | XGBoost | `max_depth=4`, `min_child_weight=50`, `subsample=0.5`, `reg_alpha=10`, `reg_lambda=10`, `gamma=2` |
 
-The test set is the last 30% of rows in chronological order, simulating future prediction rather than interpolation.
+- The test set is the last 30% of rows in chronological order, simulating future prediction rather than interpolation.
 
 ---
 
